@@ -1,9 +1,13 @@
 # VistaConsola provee una clase encargada de generar entradas y salidas de consola a mode de vista #
 
 
-def validarEntradas(entrada):
-    if entrada < 2 or entrada > 13:
+def validarentradas(entrada, pines_disponibles):
+    if not entrada.isnumeric():
+        raise TypeError("Debe ingresarse un tipo de valor entero entre " + repr(pines_disponibles))
+    elif not int(entrada) in pines_disponibles:
         raise ValueError("campos fuera de rango")
+    else:
+        return int(entrada)
 
 
 class VistaConsola:
@@ -18,11 +22,7 @@ class VistaConsola:
     def mostrar(self, mensaje):
         print(mensaje)
 
-    def asignarTriggerPin(self):
-        validarEntradas(int(input("Ingrese el pin asignado al Trigger (2-13)")))
-
-    def asignarEchoPin(self):
-        validarEntradas(int(input("Ingrese el pin asignado al Echo (2-13)")))
-
-    def asignarServoPin(self):
-        validarEntradas(int(input("Ingrese el pin asignado al Servo (2-13)")))
+    def asignar(self, leyenda, pines_disponibles):
+        texto_input = leyenda + '\npines disponibles ' + repr(pines_disponibles) + ' -> '
+        entrada = input(texto_input)
+        return validarentradas(entrada, pines_disponibles)
