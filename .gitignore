@@ -1,2 +1,4 @@
 .idea/
 mvc/Models/__pycache__/
+mvc/Views/__pycache__/
+mvc/Controllers/__pycache__/
