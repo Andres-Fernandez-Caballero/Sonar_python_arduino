@@ -1,10 +1,12 @@
 # define una clase plaqueta que reperesenta el modelo de una plaqueta Arduino #
 
-from pyfirmata import Arduino, util
+from Arduino import Arduino
 import time
 
-__STATE_LOW__ = 0
-__STATE_HIGH__ = 1
+__BAUD_SPEED__ = 115200
+
+__STATE_LOW__ = "LOW"
+__STATE_HIGH__ = "HIGH"
 
 __PINES_DIGITALES__ = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 __PINES_RPM_DISPONIBLES__ = [3, 5, 6, 9, 10, 11]
@@ -21,12 +23,9 @@ class Sonar:
         self.echo = None  # digital_input
         self.servo = None  # digital_rpm
 
+        # lista de pines disponibles
         self.pines_digitales_disponibles = __PINES_DIGITALES__
         self.pines_rpm_disponibles = __PINES_RPM_DISPONIBLES__
-
-        # hilo para las funciones rpm
-        iterador = util.Iterator(self.arduino)
-        iterador.start()
 
     def __restar_pines_disponibles__(self, pin):
         if pin in self.pines_digitales_disponibles:
@@ -46,48 +45,30 @@ class Sonar:
         self.servo = pin_servo
         self.__restar_pines_disponibles__(pin_servo)
 
-    def conectar(self, puerto_arduino):
-        self.arduino = Arduino(puerto_arduino)
-
-    def prueba_blink(self, puerto_arduino):
-
-        while True:
-            self.__digitalWrite__(puerto_arduino, __STATE_HIGH__)
-            self.__delay__(1)
-            self.__digitalWrite__(puerto_arduino, __STATE_LOW__)
-            self.__delay__(1)
+    def conectar(self, puerto_arduino):  # obsoleto
+        self.arduino = Arduino(__BAUD_SPEED__, puerto_arduino)
 
     def getDistancia(self):
         # me aseguro que los pines esten iniciados sino arrojo una exepcion
         if self.trigger is None or self.echo is None:
             raise Exception("pines no iniciados")
 
-        #  disparo el ultrasonido
-        self.__digitalWrite__(self.trigger, __STATE_LOW__)
-        Sonar.__delay__(1e-5)  # 2000 microsegundos
-        self.__digitalWrite__(self.trigger, __STATE_HIGH__)
-        Sonar.__delay__(1e-5)  # 15 microsegundos
-        self.__digitalWrite__(self.trigger, __STATE_LOW__)
-        Sonar.__delay__(1e-5)  # 10 microsegundos
+        self.__disparar__(self.trigger)
 
-        #  espero el eco
+        # mido la duracion del pulso HIGH en el pin echo
+        duracion = self.arduino.pulseIn(self.echo, __STATE_HIGH__)  # duracion = miliseg
 
-        while True:
-            pulso_inicio = time.time()
-            if self.__digitalRead__(self.echo) == __STATE_HIGH__\
-                    or time.time() - pulso_inicio == 0.5:  # espera de 0,5 seg
-                break
-        while True:
-            pulso_fin = time.time()
-            if self.__digitalRead__(self.echo) == __STATE_LOW__\
-                    or time.time() - pulso_inicio == 0.5:  # espera de 0,5 seg
-                break
+        distancia = duracion / 29. / 2.  # cm ( esta ecuancion no me cierra pero da la medica correcta)
 
-        duracion = pulso_fin - pulso_inicio
+        velocidad_sonido = 34400  # cm/seg
+        # distancia = velocidad_sonido * duracion / 2
 
-        velocidad_sonido = 34300  # cm/seg
-        distancia = velocidad_sonido * duracion / 2
-
+        """
+         Este if arregla un pequeño bug
+         las primeras mediciones devuelve valores negativos hasta que se estabiliza el sensor
+         """
+        if distancia < 0:
+            distancia = self.getDistancia()
         return distancia  # cm
 
     def mover(self, angulo):
@@ -102,11 +83,25 @@ class Sonar:
         servo.write(angulo)
 
     def __digitalWrite__(self, pin, state):
-        self.arduino.digital[int(pin)].write(state)
+        self.arduino.digitalWrite(int(pin), state)
 
+    # devuelve un intriger 1 si es verdadero y 0 si es falso
     def __digitalRead__(self, pin):
-        return self.arduino.digital[int(pin)].read()
+        return self.arduino.digitalRead(int(pin))
 
     @staticmethod
     def __delay__(time_seg):
         time.sleep(time_seg)
+
+    def __disparar__(self, trigger_pin):
+        # hago una lectura para limpuar la basura en echo
+        self.__digitalWrite__(self.echo, __STATE_LOW__)
+        self.arduino.pinMode(self.echo, "INPUT")
+
+        #  disparo el ultrasonido
+        self.__digitalWrite__(self.trigger, __STATE_LOW__)
+        Sonar.__delay__(4e-6)  # 4 microsegundos
+        self.__digitalWrite__(self.trigger, __STATE_HIGH__)
+        Sonar.__delay__(1e-5)  # 10 microsegundos
+        self.__digitalWrite__(self.trigger, __STATE_LOW__)
+
