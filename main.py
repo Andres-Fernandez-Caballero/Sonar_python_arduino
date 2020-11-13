@@ -9,16 +9,6 @@ def main():
     controller = MainController()
     controller.iniciar()
 
-    """
-     # esto anda #
-    board = Arduino(115200, 'COM10')
-    print('conectado !!!')
-
-    board.Servos.attach(9)
-    board.Servos.write(90)
-    print(board.Servos.read(9))
-    """
-
 
 if __name__ == '__main__':
     main()

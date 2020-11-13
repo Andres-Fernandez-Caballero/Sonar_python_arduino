@@ -38,12 +38,12 @@ class MainController:
 
     def __asignar__(self, leyenda, lista_pines):
 
-        validado = False
-        while not validado:
+        # validado = False
+        while True:
             try:
                 pin = self.vista.asignar(leyenda, lista_pines)
-
-                validado = True
+                self.vista.mostrar_success('pin ingresado ' + repr(pin))
+                # validado = True
                 return pin
             except (TypeError, ValueError, Exception) as e:
                 print(e.args)
@@ -51,56 +51,46 @@ class MainController:
     def __cargar_pines__(self):
 
         # Asignacion de la posicion del pin correspondiente al Trigger del ultrasonido
-        trigger_pin = self.vista.asignar('Ingrese pin correspondiente al Trigger'
-                                         , self.sonar.pines_digitales_disponibles)
-
-        self.vista.mostrar_alerta('pin ingresado ' + repr(trigger_pin))
+        trigger_pin = self.__asignar__('Ingrese pin correspondiente al Trigger', self.sonar.pines_digitales_disponibles)
         self.sonar.asignar_trigger(trigger_pin)
 
         # Asignacion de la posicion del pin correspondiente al Echo del ultrasonido
-        echo_pin = self.vista.asignar('Ingrese pin correspondiente al Echo'
-                                      , self.sonar.pines_digitales_disponibles)
-
-        self.vista.mostrar_alerta('pin ingresado ' + repr(echo_pin))
+        echo_pin = self.__asignar__('Ingrese pin correspondiente al Echo', self.sonar.pines_digitales_disponibles)
         self.sonar.asignar_echo(echo_pin)
 
         # Asignacion de la posicion del pin correspondiente al servo-motor
-        servo_pin = self.vista.asignar("Ingrese pin correspondiente al Servo", self.sonar.pines_rpm_disponibles)
-        self.vista.mostrar_alerta('pin ingresado ' + repr(servo_pin))
+        servo_pin = self.__asignar__("Ingrese pin correspondiente al Servo", self.sonar.pines_rpm_disponibles)
         self.sonar.asignar_servo(servo_pin)
+
+    def iniciarSonar(self):
+        try:
+            self.sonar.mover(0) # posiciono el sonar en el inicio
+            while True:
+                for angulo in range (0, 181, 45):
+                    self.sonar.mover(angulo)
+                    self.sonar.__delay__(1.5)
+                    distancia = self.sonar.getDistancia()
+                    self.vista.set_sonar(angulo, distancia)
+
+        except Exception as e:
+            self.vista.mostrar_alerta(e.args)
 
     def iniciar(self):
 
         self.vista.iniciar()
 
-        self.__conectar_arduino_A_USB__()
-
         self.__cargar_pines__()
 
-        """
-        self.vista.mostrar("iniciando lectura del sonar")
-        while True:
-            try:
-                lectura = self.sonar.getDistancia()
-                self.vista.mostrar(lectura)
-                time.sleep(1)
-            except Exception as e:
-                print(e.args)
-        """
+        self.__conectar_arduino_A_USB__()
 
-        self.vista.mostrar("probando servo")
-        """
-        try:
-            while True:
-                for angulo in range(0, 180, 10):
-                    self.sonar.mover(angulo)
-                    
-                for angulo in range(180, 0, 10):
-                    self.sonar.mover(angulo)
-        except Exception as e:
-            self.vista.mostrar_alerta(e.args)
-        """
-        self.sonar.mover(0)
-        self.sonar.__delay__(1)
+        self.iniciarSonar()
+
+
+
+
+
+
+
+
 
 

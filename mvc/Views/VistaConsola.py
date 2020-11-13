@@ -2,6 +2,12 @@
 
 import termcolor as colors
 
+vista_sonar = '''     
+    \     |     /
+      \   |   /  
+        \ | /    
+    - - - * - - -
+    '''
 
 def validarentradas(entrada, pines_disponibles):
     if not entrada.isnumeric():
@@ -20,6 +26,7 @@ class VistaConsola:
     def iniciar(self):
         self.isActiva = True
         self.mostrar("Bienvenido al sonar")
+        self.mostrar_success(vista_sonar)
 
     def __mostrar__(self, mensaje, color):
         texto = colors.colored(mensaje, color)
@@ -32,9 +39,18 @@ class VistaConsola:
     def mostrar_alerta(self, mensaje):
         self.__mostrar__(mensaje, 'red')
 
+    def mostrar_success(self, mensaje):
+        self.__mostrar__(mensaje, 'green')
+
+    def mostrar_info(self, mensaje):
+        self.__mostrar__(mensaje, 'blue')
+
     def asignar(self, leyenda, pines_disponibles):
         texto_input = leyenda + '\npines disponibles ' + repr(pines_disponibles) + ' -> '
         entrada = input(texto_input)
 
         return validarentradas(entrada, pines_disponibles)
+
+    def set_sonar(self, angulo, distancia):
+        pass
 
