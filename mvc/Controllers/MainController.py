@@ -49,22 +49,26 @@ class MainController:
                 print(e.args)
 
     def __cargar_pines__(self):
+
+        # Asignacion de la posicion del pin correspondiente al Trigger del ultrasonido
         trigger_pin = self.vista.asignar('Ingrese pin correspondiente al Trigger'
                                          , self.sonar.pines_digitales_disponibles)
 
         self.vista.mostrar_alerta('pin ingresado ' + repr(trigger_pin))
         self.sonar.asignar_trigger(trigger_pin)
 
+        # Asignacion de la posicion del pin correspondiente al Echo del ultrasonido
         echo_pin = self.vista.asignar('Ingrese pin correspondiente al Echo'
                                       , self.sonar.pines_digitales_disponibles)
 
         self.vista.mostrar_alerta('pin ingresado ' + repr(echo_pin))
         self.sonar.asignar_echo(echo_pin)
 
-        """
-        servo_pin = self.__asignar__("Ingrese pin correspondiente al Servo", self.sonar.pines_rpm_disponibles)
-        self.sonar.asignar_echo(servo_pin)
-        """
+        # Asignacion de la posicion del pin correspondiente al servo-motor
+        servo_pin = self.vista.asignar("Ingrese pin correspondiente al Servo", self.sonar.pines_rpm_disponibles)
+        self.vista.mostrar_alerta('pin ingresado ' + repr(servo_pin))
+        self.sonar.asignar_servo(servo_pin)
+
     def iniciar(self):
 
         self.vista.iniciar()
@@ -72,8 +76,9 @@ class MainController:
         self.__conectar_arduino_A_USB__()
 
         self.__cargar_pines__()
-        print('iniciando lectura de distancia')
 
+        """
+        self.vista.mostrar("iniciando lectura del sonar")
         while True:
             try:
                 lectura = self.sonar.getDistancia()
@@ -81,3 +86,21 @@ class MainController:
                 time.sleep(1)
             except Exception as e:
                 print(e.args)
+        """
+
+        self.vista.mostrar("probando servo")
+        """
+        try:
+            while True:
+                for angulo in range(0, 180, 10):
+                    self.sonar.mover(angulo)
+                    
+                for angulo in range(180, 0, 10):
+                    self.sonar.mover(angulo)
+        except Exception as e:
+            self.vista.mostrar_alerta(e.args)
+        """
+        self.sonar.mover(0)
+        self.sonar.__delay__(1)
+
+

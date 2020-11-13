@@ -75,12 +75,14 @@ class Sonar:
         # me aseguro que los pines esten iniciados sino arrojo una exepcion
         if self.servo is None:
             raise Exception("pin no iniciado")
-
-        pin_mode = 'd:' + str(self.servo) + ':s'  # en base a la documentacion pyfirmata d:digital, numero_pin, s:servo
-
-        servo = self.arduino.get_pin(pin_mode)
-
-        servo.write(angulo)
+        if self.arduino is None:
+            raise Exception("Arduino no conectado")
+        board = self.arduino
+        board.Servos.attach(self.servo) # TODO: aca rompe
+        # self.arduino.Servos.write(self.servo, angulo)  # muevo el servo al angulo indicado
+        # posicion = self.arduino.Servos.read(self.servo)  # recupero la posicion del angulo
+        # self.arduino.Servos.detach(self.servo)  # libero el servo
+        # return posicion
 
     def __digitalWrite__(self, pin, state):
         self.arduino.digitalWrite(int(pin), state)
