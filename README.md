@@ -18,8 +18,7 @@ Para poder implementar este proyecto debe sergir las siguientes instrucciones
 ### Instalacion entorno Arduino y carga del sketch StandardFirmata
 1. descargue e instale el entorno de desarrollo arduino de https://www.arduino.cc/en/software
 2. abra el programa.
-3. valla a archivo -> ejemplos -> firmata -> StandardFirmata, se abrira una nueva ventana con un programa ya cargado, este le permitira comunicar su computadora con el arduiono a travez del protocolo firmata.
-![libreria firmata](http://echidna.es/wp-content/uploads/2020/10/BuscarStandarfirmata-600x586.png)
+3. desde la carpeta del proyecto valla a Arduino/firmata/firmata.ino y abra el sketck Arduino.
 4. En la ventana nueva valla a la pestaña herramientas -> placa -> arduino uno
 ![placa arduino uno](http://echidna.es/wp-content/uploads/2020/10/SeleccionarPlaca.png)
 5. conecte la plaqueta arduino uno a la computadora con el cable de impresora
