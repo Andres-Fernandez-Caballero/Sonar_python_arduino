@@ -1,6 +1,8 @@
 # VistaConsola provee una clase encargada de generar entradas y salidas de consola a mode de vista #
 
 import termcolor as colors
+import sys
+import os
 
 vista_sonar = '''     
     \     |     /
@@ -28,7 +30,7 @@ class VistaConsola:
         self.mostrar("Bienvenido al sonar")
         self.mostrar_success(vista_sonar)
 
-    def __mostrar__(self, mensaje, color):
+    def _mostrar(self, mensaje, color):
         texto = colors.colored(mensaje, color)
         print(texto)
 
@@ -37,13 +39,13 @@ class VistaConsola:
         print(texto)
 
     def mostrar_alerta(self, mensaje):
-        self.__mostrar__(mensaje, 'red')
+        self._mostrar(mensaje, 'red')
 
     def mostrar_success(self, mensaje):
-        self.__mostrar__(mensaje, 'green')
+        self._mostrar(mensaje, 'green')
 
     def mostrar_info(self, mensaje):
-        self.__mostrar__(mensaje, 'blue')
+        self._mostrar(mensaje, 'blue')
 
     def asignar(self, leyenda, pines_disponibles):
         texto_input = leyenda + '\npines disponibles ' + repr(pines_disponibles) + ' -> '
@@ -52,5 +54,5 @@ class VistaConsola:
         return validarentradas(entrada, pines_disponibles)
 
     def set_sonar(self, angulo, distancia):
-        pass
+        self.mostrar_success(f"Angulo: {angulo} ----- distancia: {distancia}")
 

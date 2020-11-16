@@ -3,6 +3,7 @@ import time
 from mvc.Models.Sonar import Sonar
 from mvc.Models.ConectorUsb import ConectorUsb
 from mvc.Views.VistaConsola import VistaConsola
+from funciones.tiempo import pausa
 
 
 class MainController:
@@ -13,30 +14,30 @@ class MainController:
         self.vista = VistaConsola()
         self.sonar = Sonar()
 
-    def __conectar_arduino_A_USB__(self):
-        #TODO: hacer que la vista pregunte por reintentar conexion o no
-        puertos_arduino_disponibles = ConectorUsb.getArduinoPorts()
+    def _conectar_arduino_a_usb(self):
+        # TODO: hacer que la vista pregunte por reintentar conexion o no
+        puertos_arduino_disponibles = ConectorUsb.get_arduino_ports()
         cantidad_puertos = len(puertos_arduino_disponibles)
 
         if cantidad_puertos == 0:
             self.vista.mostrar_alerta("El Arduino no esta Conectado a ningun puerto")
-            exit(-0)
+            exit(-0)  # finalizo el programa con codigo 0
         elif cantidad_puertos == 1:
             puerto = puertos_arduino_disponibles[0]
 
             self.vista.mostrar("Conectando...")
             try:
-                #self.sonar = Sonar(puerto[ConectorUsb.__NOMBRE_PUERTO__])
-                self.sonar.conectar(puerto[ConectorUsb.__NOMBRE_PUERTO__])
+                self.sonar.conectar(ConectorUsb.get_nombre(puerto))
             except Exception as e:
                 self.vista.mostrar_alerta(e.args)
+                exit(0)  # salgo del programa con codigo 0
 
             # self.sonar.conectar(puerto[ConectorUsb.__NOMBRE_PUERTO__]) # obsoleto
-            self.vista.mostrar("Arduino conectado al puerto " + puerto[ConectorUsb.__NOMBRE_PUERTO__])
+            self.vista.mostrar("Arduino conectado al puerto " + ConectorUsb.get_nombre(puerto))
         elif cantidad_puertos > 1:
             pass  # TODO: hacer la vista para manejar mas de un puerto conectado
 
-    def __asignar__(self, leyenda, lista_pines):
+    def _asignar(self, leyenda, lista_pines):
 
         # validado = False
         while True:
@@ -48,30 +49,46 @@ class MainController:
             except (TypeError, ValueError, Exception) as e:
                 print(e.args)
 
-    def __cargar_pines__(self):
+    def _cargar_pines(self):
 
         # Asignacion de la posicion del pin correspondiente al Trigger del ultrasonido
-        trigger_pin = self.__asignar__('Ingrese pin correspondiente al Trigger', self.sonar.pines_digitales_disponibles)
-        self.sonar.asignar_trigger(trigger_pin)
+        trigger_pin = self._asignar('Ingrese pin correspondiente al Trigger', self.sonar.pines_digitales_disponibles)
+        self.sonar.trigger = trigger_pin
 
         # Asignacion de la posicion del pin correspondiente al Echo del ultrasonido
-        echo_pin = self.__asignar__('Ingrese pin correspondiente al Echo', self.sonar.pines_digitales_disponibles)
-        self.sonar.asignar_echo(echo_pin)
+        echo_pin = self._asignar('Ingrese pin correspondiente al Echo', self.sonar.pines_digitales_disponibles)
+        self.sonar.echo = echo_pin
 
         # Asignacion de la posicion del pin correspondiente al servo-motor
-        servo_pin = self.__asignar__("Ingrese pin correspondiente al Servo", self.sonar.pines_rpm_disponibles)
-        self.sonar.asignar_servo(servo_pin)
+        servo_pin = self._asignar("Ingrese pin correspondiente al Servo", self.sonar.pines_rpm_disponibles)
+        self.sonar.servo = servo_pin
 
-    def iniciarSonar(self):
+    def iniciar_sonar(self):
         try:
-            self.sonar.mover(0) # posiciono el sonar en el inicio
+            self.sonar.mover(0) # coloco el servo en la posicion inicial
             while True:
-                for angulo in range (0, 181, 45):
-                    self.sonar.mover(angulo)
-                    self.sonar.__delay__(1.5)
+                for angulo in range(0, 180, 45):
+
+                    distancia = self.sonar.getDistancia()
+                    self.vista.set_sonar(angulo, distancia)
+                    pausa(1)
+                    distancia = self.sonar.getDistancia()
+                    self.vista.set_sonar(angulo, distancia)
+                    pausa(1)
                     distancia = self.sonar.getDistancia()
                     self.vista.set_sonar(angulo, distancia)
 
+                    self.sonar.mover(angulo)
+                    pausa(1)
+
+        except Exception as e:
+            self.vista.mostrar_alerta(e.args)
+
+    def prueba_distancia(self):
+        try:
+            while True:
+                distancia = self.sonar.getDistancia()
+                self.vista.mostrar_info(distancia)
         except Exception as e:
             self.vista.mostrar_alerta(e.args)
 
@@ -79,11 +96,13 @@ class MainController:
 
         self.vista.iniciar()
 
-        self.__cargar_pines__()
+        self._cargar_pines()
 
-        self.__conectar_arduino_A_USB__()
+        self._conectar_arduino_a_usb()
 
-        self.iniciarSonar()
+        self.iniciar_sonar()
+
+        # self.prueba_distancia()
 
 
 

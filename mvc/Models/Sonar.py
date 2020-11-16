@@ -3,62 +3,88 @@
 from Arduino import Arduino
 import time
 
-__BAUD_SPEED__ = 115200
+_BAUD_SPEED = 115200
 
-__STATE_LOW__ = "LOW"
-__STATE_HIGH__ = "HIGH"
+_STATE_LOW = "LOW"
+_STATE_HIGH = "HIGH"
 
-__PINES_DIGITALES__ = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-__PINES_RPM_DISPONIBLES__ = [3, 5, 6, 9, 10, 11]
+_PINES_DIGITALES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+_PINES_RPM = [3, 5, 6, 9, 10, 11]
 
 
-class Sonar:
+class Sonar(object):
 
     def __init__(self):
         # objeto Arduino desde la libreria pyfirmata
-        self.arduino = None
+        self._arduino = None
 
         # pines controladores
-        self.trigger = None  # digital_output
-        self.echo = None  # digital_input
-        self.servo = None  # digital_rpm
+        self._trigger = None  # digital_output
+        self._echo = None  # digital_input
+        self._servo = None  # digital_rpm
 
         # lista de pines disponibles
-        self.pines_digitales_disponibles = __PINES_DIGITALES__
-        self.pines_rpm_disponibles = __PINES_RPM_DISPONIBLES__
+        self._pines_digitales_disponibles = _PINES_DIGITALES
+        self._pines_rpm_disponibles = _PINES_RPM
 
-    def __restar_pines_disponibles__(self, pin):
+    def _restar_pines_disponibles(self, pin):
         if pin in self.pines_digitales_disponibles:
             self.pines_digitales_disponibles.remove(pin)
-        if pin in self.pines_rpm_disponibles:
-            self.pines_rpm_disponibles.remove(pin)
+        if pin in self._pines_rpm_disponibles:
+            self._pines_rpm_disponibles.remove(pin)
 
-    def asignar_trigger(self, pin_trigger):
-        self.trigger = pin_trigger
-        self.__restar_pines_disponibles__(pin_trigger)
+    # getters y setters
+    @property
+    def servo(self):
+        return self._servo
 
-    def asignar_echo(self, pin_echo):
-        self.echo = pin_echo
-        self.__restar_pines_disponibles__(pin_echo)
+    @servo.setter
+    def servo(self, pin_servo):
+        self._servo = pin_servo
+        self._restar_pines_disponibles(pin_servo)
 
-    def asignar_servo(self, pin_servo):
-        self.servo = pin_servo
-        self.__restar_pines_disponibles__(pin_servo)
+    @property
+    def trigger(self):
+        return self._trigger
+
+    @trigger.setter
+    def trigger(self, pin_trigger):
+        self._trigger = pin_trigger
+        self._restar_pines_disponibles(pin_trigger)
+
+    @property
+    def echo(self):
+        return self._echo
+
+    @echo.setter
+    def echo(self, pin_echo):
+        self._echo = pin_echo
+        self._restar_pines_disponibles(pin_echo)
+
+    @property
+    def pines_digitales_disponibles(self):
+        return self._pines_digitales_disponibles
+
+    @property
+    def pines_rpm_disponibles(self):
+        return self._pines_rpm_disponibles
 
     def conectar(self, puerto_arduino):  # obsoleto
-        self.arduino = Arduino(__BAUD_SPEED__, puerto_arduino)
-        # self.arduino.Servos.attach(9)
-        self.arduino.Servos.attach(self.servo)  # TODO: por alguna razon no es dinamico este metodo
+        self._arduino = Arduino(_BAUD_SPEED, puerto_arduino)
+        self._arduino.Servos.attach(self._servo)  # TODO: por alguna razon no es dinamico este metodo
 
     def getDistancia(self):
         # me aseguro que los pines esten iniciados sino arrojo una exepcion
-        if self.trigger is None or self.echo is None:
+        if self._trigger is None or self._echo is None:
             raise Exception("pines no iniciados")
+        if self._arduino is None:
+            raise Exception("Arduino no conectado")
 
-        self.__disparar__(self.trigger)
+        #  disparo el ultrasonido
+        self._disparar(self.trigger)
 
         # mido la duracion del pulso HIGH en el pin echo
-        duracion = self.arduino.pulseIn(self.echo, __STATE_HIGH__)  # duracion = miliseg
+        duracion = self._arduino.pulseIn_set(self._echo, _STATE_HIGH)  # duracion = miliseg
 
         distancia = duracion / 29. / 2.  # cm ( esta ecuancion no me cierra pero da la medica correcta)
 
@@ -69,42 +95,40 @@ class Sonar:
          Este if arregla un pequeño bug
          las primeras mediciones devuelve valores negativos hasta que se estabiliza el sensor
          """
-        if distancia < 0:
+        """
+        if distancia <= 0:
             distancia = self.getDistancia()
+        """
         return distancia  # cm
 
     def mover(self, angulo):
         # me aseguro que los pines esten iniciados sino arrojo una exepcion
         if self.servo is None:
             raise Exception("pin no iniciado")
-        if self.arduino is None:
+        if self._arduino is None:
             raise Exception("Arduino no conectado")
 
-        self.arduino.Servos.write(self.servo, angulo)  # muevo el servo al angulo indicado
-        posicion = self.arduino.Servos.read(self.servo)  # recupero la posicion del angulo
+        self._arduino.Servos.write(self._servo, angulo)  # muevo el servo al angulo indicado
+        posicion = self._arduino.Servos.read(self._servo)  # recupero la posicion del angulo
         # self.arduino.Servos.detach(self.servo)  # libero el servo
         return posicion
 
-    def __digitalWrite__(self, pin, state):
-        self.arduino.digitalWrite(int(pin), state)
+    def _digitalWrite(self, pin, state):
+        self._arduino.digitalWrite(int(pin), state)
 
     # devuelve un intriger 1 si es verdadero y 0 si es falso
-    def __digitalRead__(self, pin):
-        return self.arduino.digitalRead(int(pin))
+    def _digitalRead(self, pin):
+        return self._arduino.digitalRead(int(pin))
 
     @staticmethod
-    def __delay__(time_seg):
+    def _delay(time_seg):
         time.sleep(time_seg)
 
-    def __disparar__(self, trigger_pin):
-        # hago una lectura para limpuar la basura en echo
-        self.__digitalWrite__(self.echo, __STATE_LOW__)
-        self.arduino.pinMode(self.echo, "INPUT")
-
+    def _disparar(self, trigger_pin):
         #  disparo el ultrasonido
-        self.__digitalWrite__(self.trigger, __STATE_LOW__)
-        Sonar.__delay__(4e-6)  # 4 microsegundos
-        self.__digitalWrite__(self.trigger, __STATE_HIGH__)
-        Sonar.__delay__(1e-5)  # 10 microsegundos
-        self.__digitalWrite__(self.trigger, __STATE_LOW__)
+        self._digitalWrite(self._trigger, _STATE_LOW)
+        Sonar._delay(4e-6)  # 4 microsegundos
+        self._digitalWrite(self._trigger, _STATE_HIGH)
+        Sonar._delay(1e-5)  # 10 microsegundos
+        self._digitalWrite(self._trigger, _STATE_LOW)
 
