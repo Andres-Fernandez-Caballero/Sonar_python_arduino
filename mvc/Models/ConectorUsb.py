@@ -3,30 +3,30 @@ import serial.tools.list_ports
 
 
 class ConectorUsb:
-    __DESCRIPCION_PUERTO__ = 1
-    __NOMBRE_PUERTO__ = 0
+    _DESCRIPCION_PUERTO = 1
+    _NOMBRE_PUERTO = 0
 
     @staticmethod
-    def getAllPorts():
+    def get_all_ports():
         return list(serial.tools.list_ports.comports())
 
     @staticmethod
-    def getArduinoPorts():
+    def get_arduino_ports():
 
         puertos_arduinos = []
 
         ports = list(serial.tools.list_ports.comports())
 
         for port in ports:
-            if 'Arduino' in port[ConectorUsb.__DESCRIPCION_PUERTO__]:
+            if 'Arduino' in port[ConectorUsb._DESCRIPCION_PUERTO]:
                 puertos_arduinos.append(port)
 
         return puertos_arduinos
 
     @staticmethod
-    def getNombre(puerto):
-        return puerto[ConectorUsb.__NOMBRE_PUERTO__]
+    def get_nombre(puerto):
+        return puerto[ConectorUsb._NOMBRE_PUERTO]
 
     @staticmethod
-    def getDescripcion(puerto):
-        return puerto[ConectorUsb.__DESCRIPCION_PUERTO__]
+    def get_descripcion(puerto):
+        return puerto[ConectorUsb._DESCRIPCION_PUERTO]
